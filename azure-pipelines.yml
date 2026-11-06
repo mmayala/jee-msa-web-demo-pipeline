@@ -86,11 +86,33 @@ stages:
             displayName: 'Publicar Cobertura en Azure DevOps'
 
   # ==========================================
-  # STAGE 2: APROBACIÓN MANUAL (APPROVAL)
+  # STAGE 2: SEGURIDAD (SAST / SCAN)
+  # ==========================================
+  - stage: Security
+    displayName: 'Seguridad'
+    dependsOn: CI
+    condition: succeeded()
+    jobs:
+      - job: security_scan
+        displayName: 'Escaneo de seguridad'
+        steps:
+          - script: |
+              echo "=== 1. Verificando dependencias y vulnerabilidades ==="
+              echo "Este paso puede integrarse con Trivy, OWASP Dependency-Check o SonarQube."
+              echo "Simulación exitosa de análisis de seguridad completado."
+            displayName: 'Escaneo de vulnerabilidades'
+
+          - script: |
+              echo "=== 2. Validando calidad del código ==="
+              echo "En una implementación real aquí se podría ejecutar SonarQube o una validación estática."
+            displayName: 'Revisión de calidad'
+
+  # ==========================================
+  # STAGE 3: APROBACIÓN MANUAL (APPROVAL)
   # ==========================================
   - stage: Approval
     displayName: 'Aprobar'
-    dependsOn: CI
+    dependsOn: Security
     condition: succeeded()
     jobs:
       - job: manual_gate
@@ -104,7 +126,7 @@ stages:
               onTimeout: 'reject'
 
   # ==========================================
-  # STAGE 3: DESPLIEGUE CONTINUO (CD)
+  # STAGE 4: DESPLIEGUE CONTINUO (CD)
   # ==========================================
   - stage: CD
     displayName: 'CD'
@@ -146,11 +168,11 @@ stages:
             displayName: 'Descarga CLI, Login y Despliegue Docker'
 
   # ==========================================
-  # STAGE 4: NOTIFICACIONES (NOTIFICATIONS)
+  # STAGE 5: NOTIFICACIONES (NOTIFICATIONS)
   # ==========================================
   - stage: Notifications
     displayName: 'Notificar'
-    dependsOn: [CI, Approval, CD]
+    dependsOn: [CI, Security, Approval, CD]
     condition: always()
     jobs:
       - job: send_status_email
